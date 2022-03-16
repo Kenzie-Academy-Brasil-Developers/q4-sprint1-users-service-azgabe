@@ -23,6 +23,6 @@
   },
   "type": "module",
   "scripts": {
-    "nodemon": "nodemon index.js"
+    "nodemon": "nodemon src/index.js"
   }
 }
