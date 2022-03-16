@@ -29,4 +29,14 @@ const userSchema = yup.object().shape({
   uuid: yup.string().default(uuidv4),
 });
 
+const validateSchema = (schema) => (req, res, next) => {
+  schema
+    .validate(req.body)
+    .then((validated) => {
+      req.body = validated;
+      return next();
+    })
+    .catch((e) => res.status(400).json({ message: e.errors.join(", ") }));
+};
+
 app.listen(3000);
