@@ -48,7 +48,6 @@ const validateSchema = (schema) => (req, res, next) => {
 const verifyHeaderToken = (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
   const { uuid } = req.params;
-  req.uuid = uuid;
 
   jwt.verify(token, env.jwtSecret, (err, decoded) => {
     if (err) {
@@ -60,6 +59,7 @@ const verifyHeaderToken = (req, res, next) => {
     }
   });
 
+  req.uuid = uuid;
   return next();
 };
 
