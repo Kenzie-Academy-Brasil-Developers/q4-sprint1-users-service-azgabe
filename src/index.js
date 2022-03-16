@@ -1,13 +1,14 @@
 import express from "express";
 import * as yup from "yup";
 import { v4 as uuidv4 } from "uuid";
+import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 
 let database = [];
 
 const app = express();
-app.use(express.json());
+const port = 3000;
 
 const userSchema = yup.object().shape({
   createdOn: yup.date().default(() => new Date()),
@@ -33,10 +34,12 @@ const validateSchema = (schema) => (req, res, next) => {
   schema
     .validate(req.body)
     .then((validated) => {
-      req.body = validated;
+      req.validated = validated;
       return next();
     })
     .catch((e) => res.status(400).json({ message: e.errors.join(", ") }));
 };
 
-app.listen(3000);
+app.use(express.json());
+
+app.listen(port);
