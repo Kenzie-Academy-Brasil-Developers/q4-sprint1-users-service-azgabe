@@ -7,6 +7,11 @@ import bcrypt from "bcryptjs";
 
 let database = [];
 
+dotenv.config();
+const env = {
+  jwtSecret: process.env.JWT_SECRET,
+};
+
 const app = express();
 const port = 3000;
 
@@ -38,6 +43,24 @@ const validateSchema = (schema) => (req, res, next) => {
       return next();
     })
     .catch((e) => res.status(400).json({ message: e.errors.join(", ") }));
+};
+
+const verifyHeaderToken = (req, res, next) => {
+  const token = req.headers.authorization.split(" ")[1];
+  const { uuid } = req.params;
+  req.uuid = uuid;
+
+  jwt.verify(token, env.jwtSecret, (err, decoded) => {
+    if (err) {
+      res.status(401).json({ message: "invalid authorization token" });
+    }
+
+    if (decoded.uuid !== uuid) {
+      res.status(403).json({ message: "access denied" });
+    }
+  });
+
+  return next();
 };
 
 app.use(express.json());
