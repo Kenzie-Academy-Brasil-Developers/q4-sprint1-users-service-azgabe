@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 
-let USERS = [];
+const USERS = [];
 
 const app = express();
 const port = 3000;
@@ -101,7 +101,7 @@ app.post("/signup", validateSchema(signupSchema), async (req, res) => {
 });
 
 app.post("/login", validateSchema(loginSchema), async (req, res) => {
-  const user = USERS.find((object) => object.username === req.data.username);
+  const user = USERS.find((object) => req.data.username === object.username);
 
   try {
     if (await bcrypt.compare(req.data.password, user.password)) {
@@ -116,8 +116,29 @@ app.post("/login", validateSchema(loginSchema), async (req, res) => {
   return res.status(400).json({ message: "invalid credentials" });
 });
 
-app.get("/users", verifyAuthentication, (req, res) => {
+app.get("/users", verifyAuthentication, (_, res) => {
   res.status(200).json(USERS);
 });
+
+app.put(
+  "/users/password/:uuid",
+  verifyAuthentication,
+  verifyAuthorization,
+  async (req, res) => {
+    try {
+      const newPassword = await bcrypt.hash(req.body.password, 10);
+
+      USERS.forEach((user) => {
+        if (req.uuid === user.uuid) {
+          user.password = newPassword;
+        }
+      });
+    } catch {
+      return res.status(400).json({ message: "password must be a string" });
+    }
+
+    return res.status(204).end();
+  }
+);
 
 app.listen(port);
