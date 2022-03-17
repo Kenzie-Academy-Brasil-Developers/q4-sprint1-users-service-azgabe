@@ -113,7 +113,7 @@ app.post("/login", validateSchema(loginSchema), async (req, res) => {
     return res.status(400).json({ message: "invalid credentials" });
   }
 
-  return res.status(401).json({ message: "incorrect password" });
+  return res.status(403).json({ message: "incorrect password" });
 });
 
 app.get("/users", verifyAuthentication, (_, res) => {
