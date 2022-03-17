@@ -5,7 +5,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import bcrypt from "bcryptjs";
 
-let DATABASE = [];
+let USERS = [];
 
 const app = express();
 const port = 3000;
@@ -59,19 +59,30 @@ const validateSchema = (schema) => async (req, res, next) => {
     .catch((e) => res.status(400).json({ message: e.message.split(", ")[0] }));
 };
 
-const verifyHeaderToken = (req, res, next) => {
-  const token = req.headers.authorization.split(" ")[1];
+const verifyAuthentication = (req, res, next) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+
+    jwt.verify(token, jwtConfig.secret, (err, decoded) => {
+      if (err) {
+        return res.status(401).json({ message: "invalid authorization token" });
+      }
+
+      req.decoded = decoded;
+    });
+  } catch {
+    return res.status(401).json({ message: "missing authorization header" });
+  }
+
+  return next();
+};
+
+const verifyAuthorization = (req, res, next) => {
   const { uuid } = req.params;
 
-  jwt.verify(token, jwtConfig.secret, (err, decoded) => {
-    if (err) {
-      res.status(401).json({ message: "invalid authorization token" });
-    }
-
-    if (decoded.uuid !== uuid) {
-      res.status(403).json({ message: "access denied" });
-    }
-  });
+  if (req.decoded.uuid !== uuid) {
+    return res.status(403).json({ message: "access denied" });
+  }
 
   req.uuid = uuid;
   return next();
@@ -82,7 +93,7 @@ app.use(express.json());
 app.post("/signup", validateSchema(signupSchema), async (req, res) => {
   req.data.password = await bcrypt.hash(req.data.password, 10);
 
-  DATABASE.push(req.data);
+  USERS.push(req.data);
 
   const { password, ...payload } = req.data;
 
@@ -90,7 +101,7 @@ app.post("/signup", validateSchema(signupSchema), async (req, res) => {
 });
 
 app.post("/login", validateSchema(loginSchema), async (req, res) => {
-  const user = DATABASE.find((object) => object.username === req.data.username);
+  const user = USERS.find((object) => object.username === req.data.username);
 
   try {
     if (await bcrypt.compare(req.data.password, user.password)) {
@@ -103,6 +114,10 @@ app.post("/login", validateSchema(loginSchema), async (req, res) => {
   }
 
   return res.status(400).json({ message: "invalid credentials" });
+});
+
+app.get("/users", verifyAuthentication, (req, res) => {
+  res.status(200).json(USERS);
 });
 
 app.listen(port);
