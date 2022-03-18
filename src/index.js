@@ -56,7 +56,7 @@ const validateSchema = (schema) => async (req, res, next) => {
       req.data = validated;
       return next();
     })
-    .catch((e) => res.status(400).json({ message: e.message.split(", ")[0] }));
+    .catch((e) => res.status(422).json({ message: e.message.split(", ")[0] }));
 };
 
 const verifyAuthentication = (req, res, next) => {
@@ -110,10 +110,10 @@ app.post("/login", validateSchema(loginSchema), async (req, res) => {
       return res.status(200).json({ token });
     }
   } catch {
-    return res.status(400).json({ message: "invalid credentials" });
+    return res.status(401).json({ message: "invalid credentials" });
   }
 
-  return res.status(403).json({ message: "incorrect password" });
+  return res.status(401).json({ message: "invalid credentials" });
 });
 
 app.get("/users", verifyAuthentication, (_, res) => {
@@ -121,7 +121,7 @@ app.get("/users", verifyAuthentication, (_, res) => {
 });
 
 app.put(
-  "/users/password/:uuid",
+  "/users/:uuid/password",
   verifyAuthentication,
   verifyAuthorization,
   async (req, res) => {
